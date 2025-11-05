@@ -20,7 +20,7 @@ def make_a_rabit():
     save_image()
 
 def fill_arrays(array_of_v, array_of_f):
-    fin = open('model_1.obj', 'r')
+    fin = open('../model_1.obj', 'r')
 
     while (True):
 
