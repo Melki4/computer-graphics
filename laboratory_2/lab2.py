@@ -156,6 +156,6 @@ def save_image():
     img = Image.fromarray(image, mode='RGB')
     img = img.rotate(180)
     img = img.transpose(Image.FLIP_LEFT_RIGHT)
-    img.save('img4.png')
+    img.save('img.png')
 
 make_a_rabit()
