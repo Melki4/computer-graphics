@@ -1,12 +1,13 @@
 import math
+import quaternion
 import re
 
 import numpy as np
 
 from PIL import Image
 
-image_h = 2000
-image_w = 3000
+image_h = 1000
+image_w = 1000
 
 image = np.zeros((image_h, image_w, 3), dtype=np.uint8)
 
@@ -14,11 +15,11 @@ boof_z = [[math.inf for j in range(image_w)] for i in range(image_h)]
 
 def make_a_image():
 
-    make_an_image_in_degre(150, 45, 90, "../12268_banjofrog_v1_L3 (2).obj",
-                           "12268_banjofrog_diffuse (2).jpg", 100, 12000)
-    make_an_image_in_degre(150, 45, 180, '../12221_Cat_v1_l3 (2).obj',
-                           "Cat_diffuse (2).jpg", 400, 7000)
-
+    make_an_image_in_quaternions(150, 45, 90, "../12268_banjofrog_v1_L3 (2).obj",
+                           "12268_banjofrog_diffuse (2).jpg", 410, 20000)
+    print("dsds")
+    make_an_image_in_quaternions_with_O(0, 0, 1,90 , '../model_1.obj',
+                           "bunny-atlas.jpg", 400, 1400000)
 
     save_image()
 
@@ -33,7 +34,63 @@ def make_an_image_in_degre(a1, a2, a3, name_of_obj, name_of_text_image, leng, si
     make_rotation_in_degree(array_of_dot_coordinates, a1, a2, a3, leng)
 
     main_work(array_of_dot_coordinates, array_of_f, array_of_textures, name_of_text_image, siize)
-    print()
+
+def make_an_image_in_radians(ax, ay, az, name_of_obj, name_of_text_image, leng, siize):
+
+    array_of_dot_coordinates = list(list())
+    array_of_f = list(list())
+    array_of_textures = list(list())
+
+    fill_arrays(array_of_dot_coordinates, array_of_f, array_of_textures, name_of_obj)
+
+    make_rotation_in_radians(array_of_dot_coordinates, ax, ay, az, leng)
+
+    main_work(array_of_dot_coordinates, array_of_f, array_of_textures, name_of_text_image, siize)
+
+def make_an_image_in_quaternions(ax, ay, az, name_of_obj, name_of_text_image, leng, siize):
+
+    ax = math.radians(ax)
+    ay = math.radians(ay)
+    az = math.radians(az)
+
+    qx = quaternion.quaternion(math.cos(ax/2), math.sin(ax/2), 0, 0)
+    qy = quaternion.quaternion(math.cos(ay/2), 0, math.sin(ay/2), 0)
+    qz = quaternion.quaternion(math.cos(az/2), 0, 0, math.sin(az/2))
+
+    R = quaternion.as_rotation_matrix(qx * qy * qz)
+
+    array_of_dot_coordinates = list(list())
+    array_of_f = list(list())
+    array_of_textures = list(list())
+
+    fill_arrays(array_of_dot_coordinates, array_of_f, array_of_textures, name_of_obj)
+
+    make_rotation_in_quaternions(array_of_dot_coordinates, R, leng)
+
+    main_work(array_of_dot_coordinates, array_of_f, array_of_textures, name_of_text_image, siize)
+
+def make_an_image_in_quaternions_with_O(u1, u2, u3, aQ,  name_of_obj, name_of_text_image, leng, siize):
+
+    # qx = quaternion.quaternion(math.cos(ax/2), math.sin(ax/2), 0, 0)
+    # qy = quaternion.quaternion(math.cos(ay/2), 0, math.sin(ay/2), 0)
+    # qz = quaternion.quaternion(math.cos(az/2), 0, 0, math.sin(az/2))
+
+    aQ = math.radians(aQ)
+
+    q = quaternion.quaternion(math.cos(aQ/2), math.sin(aQ/2)*u1,u2*math.sin(aQ/2),u3*math.sin(aQ/2))
+
+    R = quaternion.as_rotation_matrix(q)
+
+    array_of_dot_coordinates = list(list())
+    array_of_f = list(list())
+    array_of_textures = list(list())
+
+    fill_arrays(array_of_dot_coordinates, array_of_f, array_of_textures, name_of_obj)
+
+    make_rotation_in_quaternions(array_of_dot_coordinates, R, leng)
+
+    main_work(array_of_dot_coordinates, array_of_f, array_of_textures, name_of_text_image, siize)
+
 
 def fill_arrays(array_of_v, array_of_f, array_of_t, name_of_obj):
 
@@ -51,7 +108,6 @@ def fill_arrays(array_of_v, array_of_f, array_of_t, name_of_obj):
                 if split[i]=="":
                     split.remove("")
 
-            split.append("")
             array_of_v.append(split)
 
         elif boof[0] == 'v' and boof[1] == 't' :
@@ -59,11 +115,12 @@ def fill_arrays(array_of_v, array_of_f, array_of_t, name_of_obj):
             #!!!!!!
         elif boof[0] == 'f' and boof[1] == ' ':
             f = re.split('[ , \n]', boof)
-            f.pop()
-            f.pop()
+
             face_vertices = list()
 
-            if (len(f)>4):
+            if (len(f)>5):
+                f.pop()
+                f.pop()
                 index = 2
                 while (index < len(f)-1):
                     face_vertices = list()
@@ -84,13 +141,16 @@ def fill_arrays(array_of_v, array_of_f, array_of_t, name_of_obj):
 
                     index+=1
                     array_of_f.append(face_vertices)
+
             else:
+                face_vertices = list()
                 for el in f[1:4]:
                     vertex_index = el.split('/')[0]
                     face_vertices.append(int(vertex_index))
                 for el in f[1:4]:
                     vertex_index = el.split('/')[1]
                     face_vertices.append(int(vertex_index))
+                # print(face_vertices)
                 array_of_f.append(face_vertices)
 
     fin.close()
@@ -126,7 +186,7 @@ def make_rotation_in_degree(arrays_of_v, x ,y ,z, leng):
         el[2] = vector[1]
         el[3] = vector[2]
 
-def make_rotation_in_radians(arrays_of_v,x ,y ,z):
+def make_rotation_in_radians(arrays_of_v,x ,y ,z, leng):
     for i in range(len(arrays_of_v)):
 
         el = arrays_of_v[i]
@@ -151,7 +211,26 @@ def make_rotation_in_radians(arrays_of_v,x ,y ,z):
 
         vector = np.dot(R, vector)
 
-        move_a_litle(vector)
+        move_a_litle(vector, leng)
+
+        el[1] = vector[0]
+        el[2] = vector[1]
+        el[3] = vector[2]
+
+def move_a_litle(vector, len):
+    vector[0] += 0.00
+    vector[1] -= 0.05
+    vector[2] += len
+
+def make_rotation_in_quaternions(arrays_of_v, R, leng):
+    for i in range(len(arrays_of_v)):
+
+        el = arrays_of_v[i]
+
+        vector = np.array([float(el[1]), float(el[2]), float(el[3])])
+        vector = np.dot(R, vector)
+
+        move_a_litle(vector, leng)
 
         el[1] = vector[0]
         el[2] = vector[1]
@@ -168,6 +247,8 @@ def find_normals(array_of_dot_coordinates, array_of_f):
         array_of_dot_normals.append([0, 0, 0])
 
     for el in array_of_f:
+        # print(el[2] - 1)
+
         a = np.array([float(array_of_dot_coordinates[el[0] - 1][1]) - float(array_of_dot_coordinates[el[1] - 1][1]),
                       float(array_of_dot_coordinates[el[0] - 1][2]) - float(array_of_dot_coordinates[el[1] - 1][2]),
                       float(array_of_dot_coordinates[el[0] - 1][3]) - float(array_of_dot_coordinates[el[1] - 1][3])])
@@ -281,7 +362,7 @@ def draw_triangle(image, x0, y0, x1, y1, x2, y2, i0, i1, i2, u1, u2, u3, z0, z1,
                 newz = array[0]*z0 + array[1]*z1+ array[2]*z2
                 if newz < boof_z[y][x] :
                     if (array[0] * i0 + array[1] * i1 + array[2] * i2) < 0 :
-                        image[y, x] = (-(array[0] * i0 + array[1] * i1 + array[2] * i2) *
+                            image[y, x] = (-(array[0] * i0 + array[1] * i1 + array[2] * i2) *
                                        as_array[int(Wt*(array[0]*float(u1[2]) +
                                        array[1]*float(u2[2]) +
                                        array[2]*float(u3[2])))]
@@ -290,14 +371,14 @@ def draw_triangle(image, x0, y0, x1, y1, x2, y2, i0, i1, i2, u1, u2, u3, z0, z1,
                                        array[2]*float(u3[1])))])
                     boof_z[y][x] = newz
 
-def draw_triangle_no_texture(image, x0, y0, x1, y1, x2, y2, i0, i1, i2, z0, z1, z2, image_texture):
+def draw_triangle_no_texture(image, x0, y0, x1, y1, x2, y2, i0, i1, i2, z0, z1, z2, image_texture, siize):
 
     Wt = image_texture.width
     Ht = image_texture.height
 
-    Size = 3500
-    height = 1000
-    width = 1000
+    Size = siize
+    height = image_h
+    width = image_w
 
     x0_s =(x0*Size)/z0 + width/2
     x1_s =(x1*Size)/z1 + width/2
